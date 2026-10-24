@@ -1,140 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Model Viewer</title>
-
-    <!-- model-viewer from Google CDN -->
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
-
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #f0f0f0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: sans-serif;
-            overflow: hidden;
-        }
-
-        model-viewer {
-            width: 100%;
-            height: 100%;
-            background-color: #ffffff;
-            --poster-color: transparent;
-        }
-
-        /* Local file picker fallback - only shown when opened via file:// */
-        #fallback {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            text-align: center;
-            display: none;
-            z-index: 10;
-            width: 80%;
-            max-width: 300px;
-        }
-
-        #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #666;
-            font-size: 14px;
-            pointer-events: none;
-            z-index: 5;
-            transition: opacity 0.3s;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>3D Model Viewer</title>
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+<style>
+body{margin:0;padding:0;background:#f0f0f0;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;overflow:hidden}
+model-viewer{width:100%;height:100%;background:#fff;--poster-color:transparent}
+#gate{position:fixed;inset:0;background:#f0f0f0;display:flex;justify-content:center;align-items:center;z-index:100;transition:opacity .25s}
+#gate.hidden{opacity:0;pointer-events:none}
+#gate .card{background:#fff;padding:28px 24px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.15);text-align:center;width:80%;max-width:320px}
+#gate h2{margin:0 0 16px;font-size:18px;color:#222}
+#gate input{width:100%;box-sizing:border-box;padding:10px 12px;font-size:16px;border:1px solid #ccc;border-radius:6px;outline:none}
+#gate input:focus{border-color:#2196F3}
+#gate button{margin-top:12px;width:100%;background:#2196F3;color:#fff;border:none;padding:10px;border-radius:6px;font-size:16px;cursor:pointer}
+#gate button:disabled{opacity:.6;cursor:default}
+#gate .error{color:#d32f2f;font-size:13px;min-height:18px;margin-top:10px}
+#loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#666;font-size:14px;pointer-events:none;z-index:5}
+#fallback{position:absolute;top:20px;left:50%;transform:translateX(-50%);background:#fff;padding:15px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.2);display:none;z-index:10;width:80%;max-width:300px;text-align:center}
+</style>
 </head>
 <body>
-
-    <!-- Loading indicator, hidden once the model appears -->
-    <div id="loading">Loading 3D model…</div>
-
-    <!-- Local file picker fallback (file:// only) -->
-    <div id="fallback">
-        <p style="margin: 0 0 10px 0; font-size: 14px; color: #333;">
-            Browser blocked the local file. Please select your <b>.glb</b> file manually:
-        </p>
-        <input type="file" id="fileInput" accept=".glb">
-    </div>
-
-    <model-viewer
-        id="viewer"
-        alt="A 3D model"
-        camera-controls
-        auto-rotate
-        auto-rotate-delay="3000"
-        rotation-per-second="15deg"
-        interaction-prompt="none"
-        min-field-of-view="30deg"
-        max-field-of-view="60deg"
-        shadow-intensity="0.5"
-        touch-action="pan-y">
-    </model-viewer>
-
-    <script>
-        const viewer = document.getElementById('viewer');
-        const fallbackUI = document.getElementById('fallback');
-        const fileInput = document.getElementById('fileInput');
-        const loading = document.getElementById('loading');
-
-        // 1) Auto-load model from the same folder
-        viewer.src = "model.glb";
-
-        // 2) Hide loading text once the model has rendered
-        viewer.addEventListener('load', () => {
-            loading.style.opacity = '0';
-            setTimeout(() => loading.remove(), 300);
-        });
-
-        // 3) Only show picker for file:// usage; log otherwise
-        viewer.addEventListener('error', (e) => {
-            loading.remove();
-            if (location.protocol === 'file:') {
-                console.log("file:// detected. Showing manual file picker.");
-                fallbackUI.style.display = 'block';
-            } else {
-                console.error(
-                    'Model failed to load. Check that model.glb exists at the correct path and is under 100 MB.',
-                    e
-                );
-            }
-        });
-
-        // 4) Manual file selection (file:// fallback)
-        fileInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                viewer.src = URL.createObjectURL(file);
-                fallbackUI.style.display = 'none';
-            }
-        });
-
-        // 5) Device-aware quality tuning
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-                      || window.innerWidth < 768;
-
-        if (isMobile) {
-            // Shadows are expensive on phones - drop them
-            viewer.removeAttribute('shadow-intensity');
-            // Slower rotation = fewer frames of work between renders
-            viewer.setAttribute('rotation-per-second', '10deg');
-        }
-    </script>
-
+<div id="gate"><div class="card"><h2>Enter password</h2><input id="pw" type="password" autocomplete="off" autofocus><button id="pwBtn">Unlock</button><div class="error" id="pwErr"></div></div></div>
+<div id="loading" style="display:none">Loading 3D model…</div>
+<div id="fallback"><p style="margin:0 0 10px;font-size:14px;color:#333">Browser blocked the local file. Please select your <b>.glb</b> file manually:</p><input type="file" id="fileInput" accept=".glb"></div>
+<model-viewer id="viewer" alt="A 3D model" camera-controls auto-rotate auto-rotate-delay="3000" rotation-per-second="15deg" interaction-prompt="none" min-field-of-view="30deg" max-field-of-view="60deg" shadow-intensity="0.5" touch-action="pan-y"></model-viewer>
+<script>
+const PASSWORD_HASH="f223faa96f22916294922b171a2696d868fd1f9129302eb41a45b2a2ea2ebbfd";
+const viewer=document.getElementById("viewer"),gate=document.getElementById("gate"),pwInput=document.getElementById("pw"),pwBtn=document.getElementById("pwBtn"),pwErr=document.getElementById("pwErr"),loading=document.getElementById("loading"),fallbackUI=document.getElementById("fallback"),fileInput=document.getElementById("fileInput");
+async function sha256(text){const buf=new TextEncoder().encode(text);const digest=await crypto.subtle.digest("SHA-256",buf);return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("")}
+async function tryUnlock(){pwErr.textContent="";pwBtn.disabled=true;const hash=await sha256(pwInput.value);if(hash===PASSWORD_HASH){gate.classList.add("hidden");setTimeout(()=>gate.remove(),300);sessionStorage.setItem("unlocked","1");startViewer()}else{pwErr.textContent="Wrong password.";pwInput.value="";pwInput.focus();pwBtn.disabled=false}}
+pwBtn.addEventListener("click",tryUnlock);
+pwInput.addEventListener("keydown",e=>{if(e.key==="Enter")tryUnlock()});
+function startViewer(){loading.style.display="block";viewer.src="model.glb";viewer.addEventListener("load",()=>{loading.style.opacity="0";setTimeout(()=>loading.remove(),300)},{once:true});viewer.addEventListener("error",e=>{loading.remove();if(location.protocol==="file:"){fallbackUI.style.display="block"}else{console.error("Model failed to load.",e)}},{once:true});fileInput.addEventListener("change",ev=>{const f=ev.target.files[0];if(f){viewer.src=URL.createObjectURL(f);fallbackUI.style.display="none"}});const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||window.innerWidth<768;if(isMobile){viewer.removeAttribute("shadow-intensity");viewer.setAttribute("rotation-per-second","10deg")}}
+if(sessionStorage.getItem("unlocked")==="1"){gate.remove();startViewer()}
+</script>
 </body>
 </html>

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Offline 3D Model Viewer</title>
-    
-    <!-- Import the model-viewer component from Google's CDN -->
+    <title>3D Model Viewer</title>
+
+    <!-- model-viewer from Google CDN -->
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
     <style>
@@ -29,7 +29,7 @@
             --poster-color: transparent;
         }
 
-        /* Styles for the local file picker fallback */
+        /* Local file picker fallback - only shown when opened via file:// */
         #fallback {
             position: absolute;
             top: 20px;
@@ -46,21 +46,25 @@
             max-width: 300px;
         }
 
-        button {
-            background-color: #2196F3;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 5;
+            transition: opacity 0.3s;
         }
     </style>
 </head>
 <body>
 
-    <!-- Local File Picker Fallback -->
+    <!-- Loading indicator, hidden once the model appears -->
+    <div id="loading">Loading 3D model…</div>
+
+    <!-- Local file picker fallback (file:// only) -->
     <div id="fallback">
         <p style="margin: 0 0 10px 0; font-size: 14px; color: #333;">
             Browser blocked the local file. Please select your <b>.glb</b> file manually:
@@ -68,40 +72,68 @@
         <input type="file" id="fileInput" accept=".glb">
     </div>
 
-    <model-viewer 
+    <model-viewer
         id="viewer"
-        alt="A 3D model" 
-        camera-controls 
-        auto-rotate 
-        shadow-intensity="1"
-        touch-action="pan-y"
-        exposure="1">
+        alt="A 3D model"
+        camera-controls
+        auto-rotate
+        auto-rotate-delay="3000"
+        rotation-per-second="15deg"
+        interaction-prompt="none"
+        min-field-of-view="30deg"
+        max-field-of-view="60deg"
+        shadow-intensity="0.5"
+        touch-action="pan-y">
     </model-viewer>
 
     <script>
         const viewer = document.getElementById('viewer');
         const fallbackUI = document.getElementById('fallback');
         const fileInput = document.getElementById('fileInput');
+        const loading = document.getElementById('loading');
 
-        // Try to load the file automatically if hosted on a server or if your browser allows it
+        // 1) Auto-load model from the same folder
         viewer.src = "model.glb";
 
-        // If the model fails to load (because Android blocked local file access), show the file picker
-        viewer.addEventListener('error', () => {
-            console.log("Auto-load failed. Showing manual file picker.");
-            fallbackUI.style.display = 'block';
+        // 2) Hide loading text once the model has rendered
+        viewer.addEventListener('load', () => {
+            loading.style.opacity = '0';
+            setTimeout(() => loading.remove(), 300);
         });
 
-        // Handle the manual file selection
+        // 3) Only show picker for file:// usage; log otherwise
+        viewer.addEventListener('error', (e) => {
+            loading.remove();
+            if (location.protocol === 'file:') {
+                console.log("file:// detected. Showing manual file picker.");
+                fallbackUI.style.display = 'block';
+            } else {
+                console.error(
+                    'Model failed to load. Check that model.glb exists at the correct path and is under 100 MB.',
+                    e
+                );
+            }
+        });
+
+        // 4) Manual file selection (file:// fallback)
         fileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
-                // Create a temporary local URL for the file and load it into the viewer
-                const fileURL = URL.createObjectURL(file);
-                viewer.src = fileURL;
-                fallbackUI.style.display = 'none'; // Hide the picker
+                viewer.src = URL.createObjectURL(file);
+                fallbackUI.style.display = 'none';
             }
         });
+
+        // 5) Device-aware quality tuning
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+                      || window.innerWidth < 768;
+
+        if (isMobile) {
+            // Shadows are expensive on phones - drop them
+            viewer.removeAttribute('shadow-intensity');
+            // Slower rotation = fewer frames of work between renders
+            viewer.setAttribute('rotation-per-second', '10deg');
+        }
     </script>
 
 </body>

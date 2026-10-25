@@ -7,70 +7,201 @@
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#f0f0f0;font-family:sans-serif;opacity:0;animation:fadeIn .35s ease forwards}
-@keyframes fadeIn{to{opacity:1}}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#f0f0f0;font-family:sans-serif}
 body{display:flex;justify-content:center;align-items:center}
-model-viewer{width:100%;height:100%;background:#fff;--poster-color:transparent;opacity:0;transition:opacity .5s ease;will-change:opacity;contain:layout paint size}
+model-viewer{width:100%;height:100%;background:#fff;--poster-color:transparent;opacity:0;transition:opacity .5s ease}
 model-viewer.ready{opacity:1}
-#gate{position:fixed;inset:0;background:#f0f0f0;display:flex;justify-content:center;align-items:center;z-index:100;opacity:1;transition:opacity .35s ease,transform .35s ease;will-change:opacity,transform}
-#gate.hidden{opacity:0;transform:scale(1.02);pointer-events:none}
-#gate .card{background:#fff;padding:28px 24px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.15);text-align:center;width:80%;max-width:320px;animation:cardIn .45s cubic-bezier(.2,.8,.2,1) both}
-@keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-#gate h2{margin:0 0 16px;font-size:18px;color:#222}
-#gate input{width:100%;padding:10px 12px;font-size:16px;border:1px solid #ccc;border-radius:6px;outline:none;transition:border-color .2s,box-shadow .2s}
-#gate input:focus{border-color:#2196F3;box-shadow:0 0 0 3px rgba(33,150,243,.15)}
-#gate button{margin-top:12px;width:100%;background:#2196F3;color:#fff;border:none;padding:10px;border-radius:6px;font-size:16px;cursor:pointer;transition:background .2s,transform .1s}
-#gate button:hover{background:#1976D2}
-#gate button:active{transform:scale(.98)}
-#gate button:disabled{opacity:.6;cursor:default}
-#gate .error{color:#d32f2f;font-size:13px;min-height:18px;margin-top:10px;opacity:0;transition:opacity .2s}
-#gate .error.show{opacity:1}
 #loading{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(255,255,255,.65);z-index:5;opacity:0;pointer-events:none;transition:opacity .3s ease}
 #loading.show{opacity:1}
 #loading.hide{opacity:0}
-.spinner{width:36px;height:36px;border:3px solid #e0e0e0;border-top-color:#2196F3;border-radius:50%;animation:spin .8s linear infinite;will-change:transform}
+.spinner{width:36px;height:36px;border:3px solid #e0e0e0;border-top-color:#2196F3;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-#loading p{margin:14px 0 0;font-size:14px;color:#666;letter-spacing:.3px}
-#loading p::after{content:"";animation:dots 1.4s steps(4,end) infinite}
-@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}100%{content:""}}
-#fallback{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fff;padding:15px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.2);display:none;z-index:10;width:80%;max-width:300px;text-align:center;animation:cardIn .35s ease both}
+#loading p{margin:14px 0 0;font-size:14px;color:#666}
+#fallback{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fff;padding:15px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.2);display:none;z-index:10;width:80%;max-width:300px;text-align:center}
+#controls{position:fixed;bottom:16px;right:16px;z-index:20;background:rgba(255,255,255,.94);border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.15);padding:10px;display:none;flex-direction:column;gap:6px;min-width:180px}
+#controls.show{display:flex}
+#controls .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 8px;border-radius:6px;font-size:14px;color:#222;cursor:pointer;user-select:none}
+#controls .row:hover{background:#f0f0f0}
+#controls .row.flat{cursor:default}
+#controls .row.flat:hover{background:transparent}
+#controls .row.disabled{opacity:.4;cursor:not-allowed}
+#controls .lbl{font-weight:500}
+#controls .toggle{width:34px;height:20px;background:#ccc;border-radius:10px;position:relative;transition:background .2s;flex-shrink:0}
+#controls .toggle::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s}
+#controls .row.on .toggle{background:#2196F3}
+#controls .row.on .toggle::after{transform:translateX(14px)}
+#controls .btn{background:#2196F3;color:#fff;border:none;padding:8px 10px;border-radius:6px;font-size:13px;cursor:pointer}
+#controls .btn:hover{background:#1976D2}
+#controls hr{border:none;border-top:1px solid #e0e0e0;margin:4px 0}
+#controls .quality{display:flex;gap:4px}
+#controls .quality button{flex:1;background:#eee;color:#333;border:none;padding:6px 4px;border-radius:6px;font-size:12px;cursor:pointer}
+#controls .quality button.active{background:#2196F3;color:#fff}
+#controlsToggle{position:fixed;bottom:16px;right:16px;z-index:19;background:#2196F3;color:#fff;border:none;width:44px;height:44px;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,.2);cursor:pointer;display:none;align-items:center;justify-content:center;font-size:20px}
+#controlsToggle.show{display:flex}
+
+#disclaimerBox, #sourceBox{position:fixed;left:16px;z-index:20;background:rgba(255,255,255,.94);border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.15);padding:10px 12px;font-size:12px;line-height:1.4;color:#333;display:none;overflow-y:auto}
+#disclaimerBox{top:16px;width:max-content;max-width:90vw;white-space:nowrap}
+#sourceBox{bottom:16px;max-width:340px;word-wrap:break-word;overflow-wrap:break-word}
+#disclaimerBox.show, #sourceBox.show{display:block}
+#disclaimerBox .line{word-break:normal}
+#sourceBox .line{word-break:break-word}
+#disclaimerBox strong, #sourceBox strong{font-weight:600;color:#111}
+#disclaimerBox a, #sourceBox a{color:#2196F3;text-decoration:none}
+#disclaimerBox a:hover, #sourceBox a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
-<div id="gate"><div class="card"><h2>Enter password</h2><input id="pw" type="password" autocomplete="off" autofocus><button id="pwBtn">Unlock</button><div class="error" id="pwErr"></div></div></div>
 <div id="loading"><div class="spinner"></div><p>Loading 3D model</p></div>
 <div id="fallback"><p style="margin:0 0 10px;font-size:14px;color:#333">Browser blocked the local file. Please select your <b>.glb</b> file manually:</p><input type="file" id="fileInput" accept=".glb"></div>
-<model-viewer id="viewer" alt="A 3D model" camera-controls auto-rotate auto-rotate-delay="3000" rotation-per-second="12deg" interaction-prompt="none" min-field-of-view="30deg" max-field-of-view="60deg" shadow-intensity="0.5" touch-action="pan-y" loading="eager" reveal="auto"></model-viewer>
+<model-viewer id="viewer" alt="A 3D model" camera-controls interaction-prompt="none" min-field-of-view="30deg" max-field-of-view="60deg" touch-action="pan-y" loading="eager" reveal="auto" environment-image="neutral" exposure="1.1" shadow-intensity="0"></model-viewer>
+
+<div id="disclaimerBox">
+  <div class="line">
+    <strong>⚠️ Disclaimer:<br></strong> This is a representation for illustrative purposes only and does not depict the actual or historical appearance.<br>
+    Ini hanyalah sebuah rekaan/ilustrasi dan bukan gambaran yang sebenar.
+  </div>
+</div>
+
+<div id="sourceBox">
+  <div class="line">
+    <strong>🌐 Sources:</strong> "Cave Hiraaa" on <a href="https://sketchfab.com/3d-models/cave-hiraaa-72df957bc8ba4c50a9998570d850c4ee" target="_blank" rel="noopener noreferrer">Sketchfab</a> (https://sketchfab.com/3d-models/cave-hiraaa-72df957bc8ba4c50a9998570d850c4ee), licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a> (https://creativecommons.org/licenses/by/4.0/). All rights belong to the original creator.
+  </div>
+</div>
+
+<button id="controlsToggle" aria-label="Toggle controls">☰</button>
+<div id="controls">
+  <div class="row" id="rowRotate"><span class="lbl">Auto-rotate</span><span class="toggle"></span></div>
+  <div class="row" id="rowShadow"><span class="lbl">Shadows</span><span class="toggle"></span></div>
+  <div class="row on" id="rowZoom"><span class="lbl">Zoom</span><span class="toggle"></span></div>
+  <hr>
+  <div class="row flat"><span class="lbl">Quality</span><div class="quality"><button data-q="1">Low</button><button data-q="2" class="active">Med</button><button data-q="3">High</button></div></div>
+  <hr>
+  <button class="btn" id="btnReset">Reset view</button>
+  <button class="btn" id="btnFullscreen">Fullscreen</button>
+</div>
 <script>
-const PASSWORD_HASH="f223faa96f22916294922b171a2696d868fd1f9129302eb41a45b2a2ea2ebbfd";
-const viewer=document.getElementById("viewer"),gate=document.getElementById("gate"),pwInput=document.getElementById("pw"),pwBtn=document.getElementById("pwBtn"),pwErr=document.getElementById("pwErr"),loading=document.getElementById("loading"),fallbackUI=document.getElementById("fallback"),fileInput=document.getElementById("fileInput");
-const dpr=window.devicePixelRatio||1;
-const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||window.innerWidth<768;
-const lowPower=isMobile||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4)||dpr>=3;
-async function sha256(text){const buf=new TextEncoder().encode(text);const digest=await crypto.subtle.digest("SHA-256",buf);return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("")}
-async function tryUnlock(){pwErr.classList.remove("show");pwBtn.disabled=true;const hash=await sha256(pwInput.value);if(hash===PASSWORD_HASH){gate.classList.add("hidden");setTimeout(()=>gate.remove(),380);startViewer()}else{pwErr.textContent="Wrong password.";pwErr.classList.add("show");pwInput.value="";pwInput.focus();pwBtn.disabled=false}}
-pwBtn.addEventListener("click",tryUnlock);
-pwInput.addEventListener("keydown",e=>{if(e.key==="Enter")tryUnlock()});
+var viewer=document.getElementById("viewer");
+var loading=document.getElementById("loading");
+var fallbackUI=document.getElementById("fallback");
+var fileInput=document.getElementById("fileInput");
+var controls=document.getElementById("controls");
+var controlsToggle=document.getElementById("controlsToggle");
+var rowRotate=document.getElementById("rowRotate");
+var rowShadow=document.getElementById("rowShadow");
+var rowZoom=document.getElementById("rowZoom");
+var btnReset=document.getElementById("btnReset");
+var btnFullscreen=document.getElementById("btnFullscreen");
+
+var dpr=window.devicePixelRatio||1;
+var isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||window.innerWidth<768;
+var lowPower=isMobile||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4)||dpr>=3;
+
+function applyQuality(level){
+  var ratio=level==="1"?1:level==="2"?Math.min(dpr,1.5):Math.min(dpr,2);
+  viewer.setAttribute("max-pixel-ratio",String(ratio));
+  viewer.setAttribute("interpolation-decay",level==="1"?"120":level==="2"?"100":"60");
+  viewer.setAttribute("tone-mapping","linear");
+  viewer.setAttribute("shadow-softness",level==="3"?"1":"0");
+  var shadowAllowed=level==="3";
+  rowShadow.classList.toggle("disabled",!shadowAllowed);
+  if(!shadowAllowed){
+    rowShadow.classList.remove("on");
+    viewer.removeAttribute("shadow-intensity");
+  }
+  document.querySelectorAll(".quality button").forEach(function(b){
+    b.classList.toggle("active",b.getAttribute("data-q")===level);
+  });
+}
+
+function toggleFullscreen(){
+  var el=document.documentElement;
+  if(!document.fullscreenElement){
+    var req=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;
+    if(req)req.call(el).catch(function(err){console.warn("Fullscreen blocked:",err);});
+  }else{
+    var exit=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen;
+    if(exit)exit.call(document);
+  }
+}
+
+function setupControls(){
+  controlsToggle.classList.add("show");
+  document.getElementById("disclaimerBox").classList.add("show");
+  document.getElementById("sourceBox").classList.add("show");
+  
+  controlsToggle.addEventListener("click",function(){
+    controls.classList.add("show");
+    controlsToggle.style.display="none";
+  });
+  document.addEventListener("click",function(e){
+    if(controls.classList.contains("show")&&!controls.contains(e.target)&&e.target!==controlsToggle){
+      controls.classList.remove("show");
+      controlsToggle.style.display="flex";
+    }
+  });
+  rowRotate.addEventListener("click",function(){
+    rowRotate.classList.toggle("on");
+    if(rowRotate.classList.contains("on"))viewer.setAttribute("auto-rotate","");
+    else viewer.removeAttribute("auto-rotate");
+  });
+  rowShadow.addEventListener("click",function(){
+    if(rowShadow.classList.contains("disabled"))return;
+    rowShadow.classList.toggle("on");
+    if(rowShadow.classList.contains("on"))viewer.setAttribute("shadow-intensity","0.5");
+    else viewer.removeAttribute("shadow-intensity");
+  });
+  rowZoom.addEventListener("click",function(){
+    rowZoom.classList.toggle("on");
+    if(rowZoom.classList.contains("on"))viewer.removeAttribute("disable-zoom");
+    else viewer.setAttribute("disable-zoom","");
+  });
+  document.querySelectorAll(".quality button").forEach(function(btn){
+    btn.addEventListener("click",function(){applyQuality(btn.getAttribute("data-q"));});
+  });
+  btnReset.addEventListener("click",function(){
+    viewer.cameraOrbit="0deg 75deg auto";
+    viewer.fieldOfView="auto";
+    viewer.cameraTarget="auto";
+  });
+  btnFullscreen.addEventListener("click",toggleFullscreen);
+  document.addEventListener("fullscreenchange",function(){
+    btnFullscreen.textContent=document.fullscreenElement?"Exit fullscreen":"Fullscreen";
+  });
+  document.addEventListener("webkitfullscreenchange",function(){
+    btnFullscreen.textContent=document.fullscreenElement?"Exit fullscreen":"Fullscreen";
+  });
+}
+
 function startViewer(){
   loading.classList.add("show");
-  if(lowPower){
-    viewer.removeAttribute("shadow-intensity");
-    viewer.setAttribute("rotation-per-second","8deg");
-    viewer.setAttribute("environment-image","neutral");
-    viewer.setAttribute("max-pixel-ratio","1.5");
-  }else{
-    viewer.setAttribute("max-pixel-ratio","2");
-  }
+  applyQuality(lowPower?"1":"2");
+  if(lowPower)viewer.setAttribute("rotation-per-second","8deg");
+  else viewer.setAttribute("rotation-per-second","12deg");
   viewer.src="model.glb";
-  viewer.addEventListener("load",()=>{
-    requestAnimationFrame(()=>{viewer.classList.add("ready");loading.classList.add("hide");setTimeout(()=>loading.style.display="none",320)})
+  viewer.addEventListener("load",function(){
+    requestAnimationFrame(function(){
+      viewer.classList.add("ready");
+      loading.classList.add("hide");
+      setTimeout(function(){loading.style.display="none";},320);
+      setupControls();
+    });
   },{once:true});
-  viewer.addEventListener("error",e=>{
-    loading.classList.add("hide");setTimeout(()=>loading.style.display="none",320);
-    if(location.protocol==="file:"){fallbackUI.style.display="block"}else{console.error("Model failed to load.",e)}
+  viewer.addEventListener("error",function(e){
+    loading.classList.add("hide");
+    setTimeout(function(){loading.style.display="none";},320);
+    if(location.protocol==="file:")fallbackUI.style.display="block";
+    else console.error("Model failed to load.",e);
   },{once:true});
-  fileInput.addEventListener("change",ev=>{const f=ev.target.files[0];if(f){viewer.src=URL.createObjectURL(f);fallbackUI.style.display="none"}});
+  fileInput.addEventListener("change",function(ev){
+    var f=ev.target.files[0];
+    if(f){
+      viewer.src=URL.createObjectURL(f);
+      fallbackUI.style.display="none";
+    }
+  });
 }
+
+startViewer();
 </script>
 </body>
 </html>
